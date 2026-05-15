@@ -1,0 +1,8 @@
+{
+  "crons": [
+    { "path": "/api/cron/daily-focus", "schedule": "0 5 * * *" },
+    { "path": "/api/cron/weekly-review", "schedule": "0 6 * * 1" },
+    { "path": "/api/cron/momentum", "schedule": "0 22 * * *" },
+    { "path": "/api/cron/relationships", "schedule": "0 23 * * *" }
+  ]
+}
