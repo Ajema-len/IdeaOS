@@ -30,7 +30,7 @@ export function AnalysisCard({ analysis, onReanalyze }: Props) {
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-2xl bg-slate-50 p-4">
           <h3 className="text-sm font-semibold text-gray-900">Feasibility</h3>
-          <Badge variant={analysis.feasibility === "high" || analysis.feasibility === "very_high" ? "success" : analysis.feasibility === "medium" ? "warning" : "danger"} className="mt-3">{analysis.feasibility.replaceAll("_", " ")}</Badge>
+          <Badge variant={analysis.feasibility === "high" || analysis.feasibility === "very_high" ? "success" : analysis.feasibility === "medium" ? "warning" : "danger"} className="mt-3">{analysis.feasibility.replace(/_/g, " ")}</Badge>
           <p className="mt-3 text-sm text-gray-600">{analysis.feasibilityReason}</p>
         </div>
         <div className="rounded-2xl bg-slate-50 p-4">

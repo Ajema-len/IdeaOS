@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { anthropic, getModel, getMaxTokens, estimateCost } from "@/lib/ai/router";
+import { anthropic, getModel, getMaxTokens } from "@/lib/ai/router";
 import { buildChatSystemPrompt } from "@/lib/ai/prompts/chat-system";
 import { getIdeaFullContext } from "@/lib/ideas/context";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -17,11 +17,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json({ data: messages });
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { message } = await req.json();
+  const { message } = await request.json();
   if (!message?.trim()) return NextResponse.json({ error: "Message required" }, { status: 400 });
 
   const context = await getIdeaFullContext(params.id);
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         for await (const chunk of aiStream) {
           if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta") {
             fullResponse += chunk.delta.text;
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`));
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: chunk.delta.text })}\n\n`));
           }
           if (chunk.type === "message_start") promptTokens = chunk.message.usage.input_tokens;
           if (chunk.type === "message_delta") outputTokens = chunk.usage.output_tokens;

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatDate, formatRelativeTime } from "@/lib/utils";
+import { formatRelativeTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { IdeaListItem } from "@/types/idea";

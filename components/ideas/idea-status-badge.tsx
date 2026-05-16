@@ -14,5 +14,5 @@ const statusVariants: Record<IdeaStatus, "default" | "success" | "warning" | "da
 };
 
 export function IdeaStatusBadge({ status }: Props) {
-  return <Badge variant={statusVariants[status]}>{status.replaceAll("_", " ")}</Badge>;
+  return <Badge variant={statusVariants[status]}>{status.replace(/_/g, " ")}</Badge>;
 }

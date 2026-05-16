@@ -7,7 +7,7 @@ import { redis, CACHE_KEYS, TTL } from "@/lib/redis";
 import { daysSince } from "@/lib/utils";
 import type { ContextRestoreResult } from "@/types/idea";
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(req: NextRequest) {
-  if (req.headers.get("Authorization") !== `Bearer ${process.env.CRON_SECRET}`)
+export async function GET(_req: NextRequest) {
+  if (_req.headers.get("Authorization") !== `Bearer ${process.env.CRON_SECRET}`)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Trigger daily focus generation for all users (fire and forget)
@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL!;
 
   await Promise.allSettled(
-    users.map((u) =>
+    users.map((_u) =>
       fetch(`${baseUrl}/api/ai/daily-focus`, {
         headers: { Cookie: `next-auth.session-token=cron` },
       })

@@ -4,7 +4,7 @@ import { anthropic, getModel, getMaxTokens, estimateCost, parseJsonResponse } fr
 import { MILESTONE_SYSTEM_PROMPT, buildMilestonePrompt } from "@/lib/ai/prompts/milestones";
 import type { MilestonePlanResult } from "@/types/idea";
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
   const idea = await prisma.idea.findUnique({ where: { id: params.id } });
   if (!idea) return NextResponse.json({ error: "Not found" }, { status: 404 });
 

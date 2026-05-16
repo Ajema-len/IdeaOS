@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { anthropic, getModel, getMaxTokens, estimateCost, parseJsonResponse } from "@/lib/ai/router";
+import { anthropic, getModel, getMaxTokens, parseJsonResponse } from "@/lib/ai/router";
 import { DAILY_FOCUS_SYSTEM_PROMPT, buildDailyFocusPrompt } from "@/lib/ai/prompts/daily-focus";
 import { redis, CACHE_KEYS, TTL } from "@/lib/redis";
 import { format } from "date-fns";
 import type { DailyFocusResult } from "@/types/idea";
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 

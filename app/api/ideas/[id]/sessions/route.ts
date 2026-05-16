@@ -7,7 +7,7 @@ const startSessionSchema = z.object({
   goalForSession: z.string().max(500).optional(),
 });
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json({ data: sessions });
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (!idea || idea.userId !== session.user.id)
     return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const body = await req.json().catch(() => ({}));
+  const body = await _req.json().catch(() => ({}));
   const parsed = startSessionSchema.safeParse(body);
 
   const workSession = await prisma.workSession.create({

@@ -21,7 +21,7 @@ export function MilestoneItem({ id, title, description, status, dueDate, onToggl
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <h4 className="text-sm font-semibold text-gray-900">{title}</h4>
-          <Badge variant={status === "DONE" ? "success" : status === "IN_PROGRESS" ? "info" : status === "SKIPPED" ? "danger" : "secondary"}>{status.replaceAll("_", " ")}</Badge>
+          <Badge variant={status === "DONE" ? "success" : status === "IN_PROGRESS" ? "info" : status === "SKIPPED" ? "danger" : "secondary"}>{status.replace(/_/g, " ")}</Badge>
         </div>
         {description ? <p className="mt-2 text-sm text-gray-600">{description}</p> : null}
         {dueDate ? <p className="mt-2 text-xs text-gray-500">Due {new Date(dueDate).toLocaleDateString()}</p> : null}

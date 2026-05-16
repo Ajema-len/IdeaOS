@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+
 
 // Placeholder — real embedding generation requires Anthropic Embeddings API
 // or text-embedding-3-small from OpenAI. Wire up in Phase 5.
