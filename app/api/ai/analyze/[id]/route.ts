@@ -4,8 +4,9 @@ import { anthropic, getModel, getMaxTokens, estimateCost, parseJsonResponse } fr
 import { ANALYSIS_SYSTEM_PROMPT, buildAnalysisPrompt } from "@/lib/ai/prompts/analysis";
 import type { FullAnalysisResult } from "@/types/idea";
 
-export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
-  const idea = await prisma.idea.findUnique({ where: { id: params.id } });
+export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
+  const idea = await prisma.idea.findUnique({ where: { id: resolvedParams.id } });
   if (!idea) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const model = getModel("full_analysis");
@@ -28,7 +29,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
 
   const analysis = await prisma.aIAnalysis.create({
     data: {
-      ideaId: params.id,
+      ideaId: resolvedParams.id,
       model: "SONNET_4_6",
       analysisType: "FULL_ANALYSIS",
       result: result as any,

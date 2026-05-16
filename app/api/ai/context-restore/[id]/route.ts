@@ -7,16 +7,17 @@ import { redis, CACHE_KEYS, TTL } from "@/lib/redis";
 import { daysSince } from "@/lib/utils";
 import type { ContextRestoreResult } from "@/types/idea";
 
-export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const cacheKey = CACHE_KEYS.contextRestore(params.id);
+  const cacheKey = CACHE_KEYS.contextRestore(resolvedParams.id);
   const cached = await redis.get<ContextRestoreResult>(cacheKey).catch(() => null);
   if (cached) return NextResponse.json({ data: cached });
 
   const idea = await prisma.idea.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     include: {
       sessions: { orderBy: { startedAt: "desc" }, take: 5 },
       milestones: { orderBy: { orderIndex: "asc" } },
@@ -57,7 +58,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
 
   await prisma.aIAnalysis.create({
     data: {
-      ideaId: params.id,
+      ideaId: resolvedParams.id,
       model: "SONNET_4_6",
       analysisType: "CONTEXT_RESTORE",
       result: result as any,

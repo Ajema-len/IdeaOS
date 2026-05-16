@@ -31,8 +31,8 @@ export function useUpdateMilestone() {
 export function useDeleteMilestone() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ideaId }: { id: string; ideaId: string }) => {
-      await fetch(`/api/milestones/${id}`, { method: "DELETE" });
+    mutationFn: async (variables: { id: string; ideaId: string }) => {
+      await fetch(`/api/milestones/${variables.id}`, { method: "DELETE" });
     },
     onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: ["milestones", vars.ideaId] }),
   });

@@ -10,12 +10,13 @@ const updateSchema = z.object({
   dueDate: z.string().datetime().nullable().optional(),
 });
 
-export async function PATCH(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const milestone = await prisma.milestone.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     include: { idea: { select: { userId: true } } },
   });
 
@@ -27,7 +28,7 @@ export async function PATCH(_req: NextRequest, { params }: { params: { id: strin
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const updated = await prisma.milestone.update({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     data: {
       ...parsed.data,
       dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : undefined,
@@ -38,18 +39,19 @@ export async function PATCH(_req: NextRequest, { params }: { params: { id: strin
   return NextResponse.json({ data: updated });
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const milestone = await prisma.milestone.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     include: { idea: { select: { userId: true } } },
   });
 
   if (!milestone || milestone.idea.userId !== session.user.id)
     return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  await prisma.milestone.delete({ where: { id: params.id } });
+  await prisma.milestone.delete({ where: { id: resolvedParams.id } });
   return NextResponse.json({ data: { ok: true } });
 }

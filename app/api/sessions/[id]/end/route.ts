@@ -10,12 +10,13 @@ const endSessionSchema = z.object({
   notes: z.string().max(5000).optional(),
 });
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const workSession = await prisma.workSession.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     include: {
       idea: {
         include: {
@@ -38,13 +39,13 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const momentumScore = computeMomentum({
     ...workSession.idea,
     sessions: workSession.idea.sessions.map((s) =>
-      s.id === params.id ? { ...s, endedAt } : s
+      s.id === resolvedParams.id ? { ...s, endedAt } : s
     ),
   });
 
   await prisma.$transaction([
     prisma.workSession.update({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       data: {
         endedAt,
         durationMin,

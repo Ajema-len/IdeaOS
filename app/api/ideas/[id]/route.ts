@@ -19,12 +19,13 @@ async function getIdeaOrFail(id: string, userId: string) {
   return idea;
 }
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const idea = await prisma.idea.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     include: {
       sessions: { orderBy: { startedAt: "desc" }, take: 20 },
       milestones: { orderBy: { orderIndex: "asc" } },
@@ -40,11 +41,12 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   return NextResponse.json({ data: idea });
 }
 
-export async function PATCH(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const idea = await getIdeaOrFail(params.id, session.user.id);
+  const idea = await getIdeaOrFail(resolvedParams.id, session.user.id);
   if (!idea) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const body = await _req.json();
@@ -58,7 +60,7 @@ export async function PATCH(_req: NextRequest, { params }: { params: { id: strin
   };
 
   const updated = await prisma.idea.update({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     data: {
       ...parsed.data,
       ...(parsed.data.status ? statusTransitions[parsed.data.status] : {}),
@@ -68,15 +70,16 @@ export async function PATCH(_req: NextRequest, { params }: { params: { id: strin
   return NextResponse.json({ data: updated });
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const idea = await getIdeaOrFail(params.id, session.user.id);
+  const idea = await getIdeaOrFail(resolvedParams.id, session.user.id);
   if (!idea) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   await prisma.idea.update({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     data: { status: "ABANDONED", abandonedAt: new Date() },
   });
 

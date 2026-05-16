@@ -10,23 +10,25 @@ const createMilestoneSchema = z.object({
   orderIndex: z.number().optional(),
 });
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const milestones = await prisma.milestone.findMany({
-    where: { ideaId: params.id },
+    where: { ideaId: resolvedParams.id },
     orderBy: { orderIndex: "asc" },
   });
 
   return NextResponse.json({ data: milestones });
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const idea = await prisma.idea.findUnique({ where: { id: params.id } });
+  const idea = await prisma.idea.findUnique({ where: { id: resolvedParams.id } });
   if (!idea || idea.userId !== session.user.id)
     return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -35,13 +37,13 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const lastMilestone = await prisma.milestone.findFirst({
-    where: { ideaId: params.id },
+    where: { ideaId: resolvedParams.id },
     orderBy: { orderIndex: "desc" },
   });
 
   const milestone = await prisma.milestone.create({
     data: {
-      ideaId: params.id,
+      ideaId: resolvedParams.id,
       title: parsed.data.title,
       description: parsed.data.description,
       dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : undefined,

@@ -20,7 +20,7 @@ export function IdeaCard({ idea }: Props) {
           <p className="mt-2 text-sm text-gray-600 line-clamp-2">{idea.description || "No description yet."}</p>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <Badge variant={idea.isPinned ? "info" : "secondary"}>{idea.category.toLowerCase().replaceAll("_", " ")}</Badge>
+          <Badge variant={idea.isPinned ? "info" : "secondary"}>{idea.category.toLowerCase().replace(/_/g, " ")}</Badge>
           <IdeaStatusBadge status={idea.status} />
         </div>
       </div>

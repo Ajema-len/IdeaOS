@@ -1,12 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { WorkSession } from "@prisma/client";
 
 export function useSessions(ideaId: string) {
-  return useQuery({
+  return useQuery<WorkSession[]>({
     queryKey: ["sessions", ideaId],
     queryFn: async () => {
       const res = await fetch(`/api/ideas/${ideaId}/sessions`);
       const json = await res.json();
-      return json.data;
+      return json.data as WorkSession[];
     },
     enabled: !!ideaId,
   });
@@ -14,7 +15,7 @@ export function useSessions(ideaId: string) {
 
 export function useStartSession(ideaId: string) {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutation<any, Error, string | undefined>({
     mutationFn: async (goal?: string) => {
       const res = await fetch(`/api/ideas/${ideaId}/sessions`, {
         method: "POST",

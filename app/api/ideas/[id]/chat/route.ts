@@ -5,26 +5,28 @@ import { anthropic, getModel, getMaxTokens } from "@/lib/ai/router";
 import { buildChatSystemPrompt } from "@/lib/ai/prompts/chat-system";
 import { getIdeaFullContext } from "@/lib/ideas/context";
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const messages = await prisma.chatMessage.findMany({
-    where: { ideaId: params.id },
+    where: { ideaId: resolvedParams.id },
     orderBy: { createdAt: "asc" },
   });
 
   return NextResponse.json({ data: messages });
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { message } = await request.json();
   if (!message?.trim()) return NextResponse.json({ error: "Message required" }, { status: 400 });
 
-  const context = await getIdeaFullContext(params.id);
+  const context = await getIdeaFullContext(resolvedParams.id);
   if (context.idea.userId !== session.user.id)
     return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -42,7 +44,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const model = getModel("chat");
 
   await prisma.chatMessage.create({
-    data: { ideaId: params.id, role: "user", content: message },
+    data: { ideaId: resolvedParams.id, role: "user", content: message },
   });
 
   const encoder = new TextEncoder();
@@ -71,7 +73,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
         await prisma.chatMessage.create({
           data: {
-            ideaId: params.id,
+            ideaId: resolvedParams.id,
             role: "assistant",
             content: fullResponse,
             model: "SONNET_4_6",

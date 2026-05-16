@@ -7,23 +7,25 @@ const startSessionSchema = z.object({
   goalForSession: z.string().max(500).optional(),
 });
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const sessions = await prisma.workSession.findMany({
-    where: { ideaId: params.id, userId: session.user.id },
+    where: { ideaId: resolvedParams.id, userId: session.user.id },
     orderBy: { startedAt: "desc" },
   });
 
   return NextResponse.json({ data: sessions });
 }
 
-export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const idea = await prisma.idea.findUnique({ where: { id: params.id } });
+  const idea = await prisma.idea.findUnique({ where: { id: resolvedParams.id } });
   if (!idea || idea.userId !== session.user.id)
     return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -32,7 +34,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
 
   const workSession = await prisma.workSession.create({
     data: {
-      ideaId: params.id,
+      ideaId: resolvedParams.id,
       userId: session.user.id,
       goalForSession: parsed.success ? parsed.data.goalForSession : undefined,
     },
@@ -41,7 +43,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
   // Mark idea as active if backlog
   if (idea.status === "BACKLOG") {
     await prisma.idea.update({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       data: { status: "ACTIVE", startedAt: new Date() },
     });
   }

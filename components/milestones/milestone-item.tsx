@@ -12,7 +12,7 @@ type Props = {
   onDelete: () => void;
 };
 
-export function MilestoneItem({ id, title, description, status, dueDate, onToggleDone, onDelete }: Props) {
+export function MilestoneItem({ id: _id, title, description, status, dueDate, onToggleDone, onDelete }: Props) {
   return (
     <div className="flex items-start gap-3 rounded-3xl border border-gray-200 bg-white p-4">
       <div className="flex items-center gap-3 text-gray-400">

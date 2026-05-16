@@ -4,8 +4,9 @@ import { anthropic, getModel, getMaxTokens, estimateCost, parseJsonResponse } fr
 import { MILESTONE_SYSTEM_PROMPT, buildMilestonePrompt } from "@/lib/ai/prompts/milestones";
 import type { MilestonePlanResult } from "@/types/idea";
 
-export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
-  const idea = await prisma.idea.findUnique({ where: { id: params.id } });
+export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
+  const idea = await prisma.idea.findUnique({ where: { id: resolvedParams.id } });
   if (!idea) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const model = getModel("milestone_generation");
@@ -31,7 +32,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
     result.milestones.map((m, index) =>
       prisma.milestone.create({
         data: {
-          ideaId: params.id,
+          ideaId: resolvedParams.id,
           title: m.title,
           description: m.description,
           orderIndex: index,
@@ -43,7 +44,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
 
   await prisma.aIAnalysis.create({
     data: {
-      ideaId: params.id,
+      ideaId: resolvedParams.id,
       model: "SONNET_4_6",
       analysisType: "MILESTONE_PLAN",
       result: result as any,

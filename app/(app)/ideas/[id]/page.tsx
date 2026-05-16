@@ -36,7 +36,7 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
     return <div className="p-8">Idea not found</div>;
   }
 
-  const activeSession = sessions?.find((s) => !s.endedAt);
+  const activeSession = sessions?.find((s: any) => !s.endedAt);
 
   const handleToggleMilestoneDone = (milestone: Milestone) => {
     const newStatus = milestone.status === "DONE" ? "TODO" : "DONE";
@@ -94,7 +94,7 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
       <SessionTracker
         activeSession={activeSession}
         sessions={sessions || []}
-        onStart={() => startSession.mutate()}
+        onStart={() => startSession.mutate(undefined)}
         onEnd={() => {
           if (activeSession) {
             endSession.mutate({ sessionId: activeSession.id });

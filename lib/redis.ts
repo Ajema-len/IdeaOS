@@ -1,9 +1,21 @@
 import { Redis } from "@upstash/redis";
 
-export const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
+const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+const isRedisEnabled = Boolean(
+  redisUrl &&
+  redisToken &&
+  !redisUrl.includes("...") &&
+  !redisToken.includes("...")
+);
+
+export const redis = isRedisEnabled
+  ? new Redis({ url: redisUrl!, token: redisToken! })
+  : ({
+      get: async () => null,
+      setex: async () => null,
+      del: async () => null,
+    } as unknown as Redis);
 
 export const CACHE_KEYS = {
   contextRestore: (ideaId: string) => `context-restore:${ideaId}`,
