@@ -81,6 +81,7 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
         ) : milestones && milestones.length > 0 ? (
           <div className="mt-4">
             <MilestoneList
+              ideaId={ideaId}
               milestones={milestones}
               onToggleDone={handleToggleMilestoneDone}
               onDelete={handleDeleteMilestone}

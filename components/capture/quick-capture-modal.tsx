@@ -6,13 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
 type Props = {
+  open?: boolean;
   onClose: () => void;
   onSubmit: (data: { title: string; description?: string; category?: string; tags?: string[] }) => void;
   suggestedTags?: string[];
   categories?: Array<{ value: string; label: string }>;
 };
 
-export function QuickCaptureModal({ onClose, onSubmit, suggestedTags = [], categories = [] }: Props) {
+export function QuickCaptureModal({ open = false, onClose, onSubmit, suggestedTags = [], categories = [] }: Props) {
+  if (!open) return null;
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);

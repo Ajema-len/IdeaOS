@@ -1,14 +1,34 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ComplexityMeter } from "@/components/analysis/complexity-meter";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { FullAnalysisResult } from "@/types/idea";
 
 type Props = {
   analysis: FullAnalysisResult | null;
+  isLoading?: boolean;
   onReanalyze?: () => void;
 };
 
-export function AnalysisCard({ analysis, onReanalyze }: Props) {
+export function AnalysisCard({ analysis, isLoading = false, onReanalyze }: Props) {
+  if (isLoading && !analysis) {
+    return (
+      <div className="rounded-3xl border border-gray-200 bg-white p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-8 w-20" />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+        </div>
+        <Skeleton className="h-16" />
+        <Skeleton className="h-20" />
+      </div>
+    );
+  }
+
   if (!analysis) {
     return (
       <div className="rounded-3xl border border-gray-200 bg-white p-6 text-sm text-gray-600">
