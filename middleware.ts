@@ -2,16 +2,22 @@ import { auth } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  const session = await auth();
   const pathname = request.nextUrl.pathname;
 
-  // Public routes
-  const publicRoutes = ["/login", "/register", "/api/auth/register"];
+  // Public routes (including all NextAuth routes)
+  const publicRoutes = ["/login", "/register", "/api/auth"];
   const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
 
-  // Protected routes
+  // Skip middleware for public routes
+  if (isPublicRoute) {
+    return NextResponse.next();
+  }
+
+  const session = await auth();
+
+  // Protected routes (excluding public routes)
   const protectedRoutes = ["/api/", "/"];
-  const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route)) && !isPublicRoute;
+  const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
 
   // If accessing protected route without session, redirect to login
   if (isProtectedRoute && !session?.user) {
