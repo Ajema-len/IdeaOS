@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Lightbulb, Network, Target, BookOpen, Settings, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QuickCaptureModal } from "@/components/capture/quick-capture-modal";
@@ -12,12 +12,13 @@ const navItems = [
   { href: "/ideas", label: "Ideas", icon: Lightbulb },
   { href: "/graph", label: "Big picture", icon: Network },
   { href: "/focus", label: "Daily focus", icon: Target },
-  { href: "/review", label: "Weekly review", icon: BookOpen },
+  { href: "/weekly-review", label: "Weekly review", icon: BookOpen },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [captureOpen, setCaptureOpen] = useState(false);
 
   useEffect(() => {
@@ -87,6 +88,7 @@ export function Sidebar() {
             body: JSON.stringify(data),
           });
           setCaptureOpen(false);
+          router.refresh();
         }}
       />
     </>

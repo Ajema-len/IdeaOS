@@ -6,7 +6,8 @@ export function useChatHistory(ideaId: string) {
     queryFn: async () => {
       const response = await fetch(`/api/ideas/${ideaId}/chat`);
       if (!response.ok) throw new Error("Failed to fetch chat history");
-      return response.json();
+      const json = await response.json();
+      return json.data;
     },
   });
 }

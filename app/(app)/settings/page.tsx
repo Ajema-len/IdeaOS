@@ -1,34 +1,52 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useUserPreferences, useUpdateUserPreferences } from "@/hooks/use-user-preferences";
+
+const weekdays = [
+  { label: "Sunday", value: 0 },
+  { label: "Monday", value: 1 },
+  { label: "Tuesday", value: 2 },
+  { label: "Wednesday", value: 3 },
+  { label: "Thursday", value: 4 },
+  { label: "Friday", value: 5 },
+  { label: "Saturday", value: 6 },
+];
 
 export default function SettingsPage() {
   const { data: session } = useSession();
+  const { data: prefs } = useUserPreferences();
+  const updatePreferences = useUpdateUserPreferences();
   const [preferences, setPreferences] = useState({
     dailyFocusEnabled: true,
     weeklyReviewEnabled: true,
-    weeklyReviewDay: "SUNDAY",
+    weeklyReviewDay: 0,
     notificationsEnabled: true,
   });
   const [isSaving, setIsSaving] = useState(false);
 
+  useEffect(() => {
+    if (prefs) {
+      setPreferences({
+        dailyFocusEnabled: prefs.dailyFocusEnabled,
+        weeklyReviewEnabled: prefs.weeklyReviewEnabled,
+        weeklyReviewDay: prefs.weeklyReviewDay,
+        notificationsEnabled: prefs.notificationsEnabled,
+      });
+    }
+  }, [prefs]);
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const response = await fetch("/api/users/preferences", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(preferences),
-      });
-
-      if (!response.ok) throw new Error("Failed to save preferences");
+      await updatePreferences.mutateAsync(preferences);
       toast.success("Preferences saved");
     } catch (error) {
-      toast.error("Failed to save preferences");
+      toast.error(error instanceof Error ? error.message : "Failed to save preferences");
     } finally {
       setIsSaving(false);
     }
@@ -74,34 +92,35 @@ export default function SettingsPage() {
             </label>
 
             {preferences.weeklyReviewEnabled && (
-              <select
-                value={preferences.weeklyReviewDay}
-                onChange={(e) => setPreferences({ ...preferences, weeklyReviewDay: e.target.value })}
-                className="ml-7 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
-              >
-                <option value="SUNDAY">Sunday</option>
-                <option value="MONDAY">Monday</option>
-                <option value="SATURDAY">Saturday</option>
-              </select>
+              <div className="ml-7">
+                <select
+                  value={preferences.weeklyReviewDay}
+                  onChange={(e) => setPreferences({ ...preferences, weeklyReviewDay: Number(e.target.value) })}
+                  className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
+                >
+                  {weekdays.map((day) => (
+                    <option key={day.value} value={day.value}>
+                      {day.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             )}
-
-            <label className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={preferences.notificationsEnabled}
-                onChange={(e) => setPreferences({ ...preferences, notificationsEnabled: e.target.checked })}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 cursor-pointer"
-              />
-              <span className="text-sm text-gray-900">Email notifications</span>
-            </label>
           </div>
-        </div>
 
-        <div className="border-t border-gray-200 pt-6 flex gap-3">
-          <Button variant="outline">Cancel</Button>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? "Saving..." : "Save preferences"}
-          </Button>
+          <div className="border-t border-gray-200 pt-6 flex gap-3">
+            <Button variant="outline" onClick={() => prefs && setPreferences({
+              dailyFocusEnabled: prefs.dailyFocusEnabled,
+              weeklyReviewEnabled: prefs.weeklyReviewEnabled,
+              weeklyReviewDay: prefs.weeklyReviewDay,
+              notificationsEnabled: prefs.notificationsEnabled,
+            })}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? "Saving..." : "Save preferences"}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
