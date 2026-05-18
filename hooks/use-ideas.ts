@@ -31,6 +31,13 @@ export function useIdea(id: string) {
       return json.data;
     },
     enabled: !!id,
+    refetchInterval: (data) => {
+      // Poll for analysis if not yet available (max 15 seconds = 5 retries × 3 seconds)
+      const analysis = (data as any)?.analysis ?? [];
+      const hasAnalysis = analysis.some((a: any) => a.analysisType === "FULL_ANALYSIS");
+      return hasAnalysis ? false : 3000;
+    },
+    refetchIntervalInBackground: false,
   });
 }
 

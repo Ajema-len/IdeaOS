@@ -5,54 +5,66 @@ import { MILESTONE_SYSTEM_PROMPT, buildMilestonePrompt } from "@/lib/ai/prompts/
 import type { MilestonePlanResult } from "@/types/idea";
 
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = await params;
-  const idea = await prisma.idea.findUnique({ where: { id: resolvedParams.id } });
-  if (!idea) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-  const model = getModel("milestone_generation");
-
-  const message = await anthropic.messages.create({
-    model,
-    max_tokens: getMaxTokens("milestone_generation"),
-    system: MILESTONE_SYSTEM_PROMPT,
-    messages: [{ role: "user", content: buildMilestonePrompt(idea) }],
-  });
-
-  const raw = message.content[0].type === "text" ? message.content[0].text : "{}";
-
-  let result: MilestonePlanResult;
   try {
-    result = parseJsonResponse<MilestonePlanResult>(raw);
-  } catch {
-    return NextResponse.json({ error: "Failed to parse milestones" }, { status: 500 });
+    const resolvedParams = await params;
+    const idea = await prisma.idea.findUnique({ where: { id: resolvedParams.id } });
+    if (!idea) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    const model = getModel("milestone_generation");
+
+    const message = await anthropic.messages.create({
+      model,
+      max_tokens: getMaxTokens("milestone_generation"),
+      system: MILESTONE_SYSTEM_PROMPT,
+      messages: [{ role: "user", content: buildMilestonePrompt(idea) }],
+    });
+
+    const raw = message.content[0].type === "text" ? message.content[0].text : "{}";
+
+    let result: MilestonePlanResult;
+    try {
+      result = parseJsonResponse<MilestonePlanResult>(raw);
+    } catch (error) {
+      console.error("[AI milestones] Parse failed:", raw.slice(0, 300), error);
+      return NextResponse.json(
+        { error: "Failed to parse milestones", detail: String(error) },
+        { status: 500 }
+      );
+    }
+
+    // Create milestone records
+    const milestones = await prisma.$transaction(
+      result.milestones.map((m, index) =>
+        prisma.milestone.create({
+          data: {
+            ideaId: resolvedParams.id,
+            title: m.title,
+            description: m.description,
+            orderIndex: index,
+            aiGenerated: true,
+          },
+        })
+      )
+    );
+
+    await prisma.aIAnalysis.create({
+      data: {
+        ideaId: resolvedParams.id,
+        model: "SONNET_4_6",
+        analysisType: "MILESTONE_PLAN",
+        result: result as any,
+        promptTokens: message.usage.input_tokens,
+        outputTokens: message.usage.output_tokens,
+        costUsd: estimateCost(model, message.usage.input_tokens, message.usage.output_tokens),
+      },
+    });
+
+    return NextResponse.json({ data: milestones });
+  } catch (error) {
+    console.error("[AI milestones error]", error);
+    return NextResponse.json(
+      { error: "AI milestones generation failed", detail: String(error) },
+      { status: 500 }
+    );
   }
-
-  // Create milestone records
-  const milestones = await prisma.$transaction(
-    result.milestones.map((m, index) =>
-      prisma.milestone.create({
-        data: {
-          ideaId: resolvedParams.id,
-          title: m.title,
-          description: m.description,
-          orderIndex: index,
-          aiGenerated: true,
-        },
-      })
-    )
-  );
-
-  await prisma.aIAnalysis.create({
-    data: {
-      ideaId: resolvedParams.id,
-      model: "SONNET_4_6",
-      analysisType: "MILESTONE_PLAN",
-      result: result as any,
-      promptTokens: message.usage.input_tokens,
-      outputTokens: message.usage.output_tokens,
-      costUsd: estimateCost(model, message.usage.input_tokens, message.usage.output_tokens),
-    },
-  });
-
-  return NextResponse.json({ data: milestones });
 }

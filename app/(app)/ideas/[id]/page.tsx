@@ -10,6 +10,7 @@ import { MilestoneList } from "@/components/milestones/milestone-list";
 import { SessionTracker } from "@/components/sessions/session-tracker";
 import { IdeaStatusBadge } from "@/components/ideas/idea-status-badge";
 import { toast } from "sonner";
+import { useEffect, useState } from "react";
 import type { Milestone } from "@prisma/client";
 
 export default function IdeaDetailPage({ params }: { params: { id: string } }) {
@@ -23,6 +24,33 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
   const deleteMilestone = useDeleteMilestone();
   const startSession = useStartSession(ideaId);
   const endSession = useEndSession(ideaId);
+
+  const [analysisPollingStart, setAnalysisPollingStart] = useState<number | null>(null);
+  const [analysisError, setAnalysisError] = useState(false);
+
+  // Track analysis polling timeout
+  useEffect(() => {
+    if (!analysis?.fullAnalysis && analysisPollingStart === null) {
+      setAnalysisPollingStart(Date.now());
+    }
+  }, [analysis?.fullAnalysis, analysisPollingStart]);
+
+  useEffect(() => {
+    if (analysis?.fullAnalysis) {
+      setAnalysisPollingStart(null);
+      setAnalysisError(false);
+    }
+  }, [analysis?.fullAnalysis]);
+
+  // Check for polling timeout (15 seconds)
+  useEffect(() => {
+    if (analysisPollingStart && !analysis?.fullAnalysis) {
+      const elapsed = Date.now() - analysisPollingStart;
+      if (elapsed > 15000) {
+        setAnalysisError(true);
+      }
+    }
+  }, [analysisPollingStart, analysis?.fullAnalysis]);
 
   if (ideaLoading) {
     return (
@@ -47,7 +75,15 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
     if (ideaId) {
       deleteMilestone.mutate({ id: milestone.id, ideaId });
       toast.success("Milestone deleted");
-    }};
+    }
+  };
+
+  const handleReanalyzeClick = () => {
+    setAnalysisPollingStart(Date.now());
+    setAnalysisError(false);
+    // Trigger a re-fetch of analysis by invalidating the query
+    window.location.reload();
+  };
 
   return (
     <div className="flex flex-col gap-8 p-8">
@@ -72,7 +108,7 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
         </select>
       </div>
 
-      <AnalysisCard analysis={analysis?.fullAnalysis} />
+      <AnalysisCard analysis={analysis?.fullAnalysis} isError={analysisError} onReanalyze={handleReanalyzeClick} />
 
       <div>
         <h2 className="text-lg font-semibold text-gray-900">Milestones</h2>
@@ -96,9 +132,9 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
         activeSession={activeSession}
         sessions={sessions || []}
         onStart={() => startSession.mutate(undefined)}
-        onEnd={() => {
+        onEnd={(whatAccomplished) => {
           if (activeSession) {
-            endSession.mutate({ sessionId: activeSession.id });
+            endSession.mutate({ sessionId: activeSession.id, whatAccomplished });
           }
         }}
       />

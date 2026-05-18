@@ -9,6 +9,12 @@ export function useMilestones(ideaId: string) {
       return json.data;
     },
     enabled: !!ideaId,
+    refetchInterval: (data) => {
+      // Poll for milestones if not yet available (max 15 seconds = 5 retries × 3 seconds)
+      const milestones = (data as any) ?? [];
+      return milestones.length > 0 ? false : 3000;
+    },
+    refetchIntervalInBackground: false,
   });
 }
 

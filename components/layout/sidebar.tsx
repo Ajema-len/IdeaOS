@@ -6,6 +6,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Lightbulb, Network, Target, BookOpen, Settings, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QuickCaptureModal } from "@/components/capture/quick-capture-modal";
+import { useCreateIdea } from "@/hooks/use-ideas";
+import { toast } from "sonner";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -20,6 +22,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [captureOpen, setCaptureOpen] = useState(false);
+  const createIdea = useCreateIdea();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -32,6 +35,19 @@ export function Sidebar() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  const handleCaptureSubmit = async (data: { title: string; description?: string; category?: string; tags?: string[] }) => {
+    try {
+      const result = await createIdea.mutateAsync(data);
+      setCaptureOpen(false);
+      toast.success("Idea captured!");
+      // Navigate to the new idea detail page
+      router.push(`/ideas/${result.data.id}`);
+    } catch (error) {
+      toast.error("Failed to capture idea");
+      console.error(error);
+    }
+  };
 
   return (
     <>
@@ -81,15 +97,8 @@ export function Sidebar() {
       <QuickCaptureModal
         open={captureOpen}
         onClose={() => setCaptureOpen(false)}
-        onSubmit={async (data) => {
-          await fetch("/api/ideas", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-          });
-          setCaptureOpen(false);
-          router.refresh();
-        }}
+        onSubmit={handleCaptureSubmit}
+        isSubmitting={createIdea.isPending}
       />
     </>
   );

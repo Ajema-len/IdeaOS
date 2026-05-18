@@ -14,6 +14,7 @@ export function useAnalysis(ideaId: string) {
       };
     },
     enabled: !!ideaId,
+    meta: { refetchAttempts: 0 },
   });
 }
 
