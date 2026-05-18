@@ -1,7 +1,6 @@
 "use client";
 
 import { useIdea, useUpdateIdea } from "@/hooks/use-ideas";
-import { useAnalysis } from "@/hooks/use-analysis";
 import { useMilestones, useUpdateMilestone, useDeleteMilestone } from "@/hooks/use-milestones";
 import { useSessions, useStartSession, useEndSession } from "@/hooks/use-sessions";
 import { Spinner } from "@/components/ui/spinner";
@@ -15,8 +14,8 @@ import type { Milestone } from "@prisma/client";
 
 export default function IdeaDetailPage({ params }: { params: { id: string } }) {
   const ideaId = params.id;
-  const { data: idea, isLoading: ideaLoading } = useIdea(ideaId);
-  const { data: analysis } = useAnalysis(ideaId);
+  const { data: idea, isLoading: ideaLoading, isFetching: ideaFetching, refetch } = useIdea(ideaId);
+  const analysis = idea?.analysis?.find((a: any) => a.analysisType === "FULL_ANALYSIS")?.result ?? null;
   const { data: milestones = [], isLoading: milestonesLoading } = useMilestones(ideaId);
   const { data: sessions = [] } = useSessions(ideaId);
   const updateIdea = useUpdateIdea(ideaId);
@@ -28,29 +27,26 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
   const [analysisPollingStart, setAnalysisPollingStart] = useState<number | null>(null);
   const [analysisError, setAnalysisError] = useState(false);
 
-  // Track analysis polling timeout
   useEffect(() => {
-    if (!analysis?.fullAnalysis && analysisPollingStart === null) {
+    if (!analysis && idea && analysisPollingStart === null) {
       setAnalysisPollingStart(Date.now());
     }
-  }, [analysis?.fullAnalysis, analysisPollingStart]);
+  }, [analysis, idea, analysisPollingStart]);
 
   useEffect(() => {
-    if (analysis?.fullAnalysis) {
+    if (analysis) {
       setAnalysisPollingStart(null);
       setAnalysisError(false);
     }
-  }, [analysis?.fullAnalysis]);
+  }, [analysis]);
 
-  // Check for polling timeout (15 seconds)
   useEffect(() => {
-    if (analysisPollingStart && !analysis?.fullAnalysis) {
-      const elapsed = Date.now() - analysisPollingStart;
-      if (elapsed > 15000) {
-        setAnalysisError(true);
-      }
+    if (analysisPollingStart && !analysis) {
+      const timeout = window.setTimeout(() => setAnalysisError(true), 15000);
+      return () => window.clearTimeout(timeout);
     }
-  }, [analysisPollingStart, analysis?.fullAnalysis]);
+    return undefined;
+  }, [analysisPollingStart, analysis]);
 
   if (ideaLoading) {
     return (
@@ -81,8 +77,7 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
   const handleReanalyzeClick = () => {
     setAnalysisPollingStart(Date.now());
     setAnalysisError(false);
-    // Trigger a re-fetch of analysis by invalidating the query
-    window.location.reload();
+    refetch();
   };
 
   return (
@@ -108,7 +103,7 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
         </select>
       </div>
 
-      <AnalysisCard analysis={analysis?.fullAnalysis} isError={analysisError} onReanalyze={handleReanalyzeClick} />
+      <AnalysisCard analysis={analysis} isLoading={ideaFetching && !analysis} isError={analysisError} onReanalyze={handleReanalyzeClick} />
 
       <div>
         <h2 className="text-lg font-semibold text-gray-900">Milestones</h2>
@@ -119,6 +114,7 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
             <MilestoneList
               ideaId={ideaId}
               milestones={milestones}
+              ideaCreatedAt={idea.createdAt?.toISOString()}
               onToggleDone={handleToggleMilestoneDone}
               onDelete={handleDeleteMilestone}
             />
@@ -132,7 +128,7 @@ export default function IdeaDetailPage({ params }: { params: { id: string } }) {
         activeSession={activeSession}
         sessions={sessions || []}
         onStart={() => startSession.mutate(undefined)}
-        onEnd={(whatAccomplished) => {
+        onEnd={(whatAccomplished: string) => {
           if (activeSession) {
             endSession.mutate({ sessionId: activeSession.id, whatAccomplished });
           }

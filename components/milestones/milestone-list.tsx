@@ -9,17 +9,20 @@ import type { Milestone } from "@prisma/client";
 type Props = {
   ideaId: string;
   milestones: Milestone[];
+  ideaCreatedAt?: string | null;
   onToggleDone: (milestone: Milestone) => void;
   onDelete: (milestone: Milestone) => void;
   onAddMilestone?: (title: string, ideaId: string) => void;
 };
 
-export function MilestoneList({ ideaId, milestones, onToggleDone, onDelete, onAddMilestone }: Props) {
+export function MilestoneList({ ideaId, milestones, ideaCreatedAt, onToggleDone, onDelete, onAddMilestone }: Props) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const sorted = useMemo(() => [...milestones].sort((a, b) => a.orderIndex - b.orderIndex), [milestones]);
   const doneCount = sorted.filter((m) => m.status === "DONE").length;
   const progress = sorted.length > 0 ? Math.round((doneCount / sorted.length) * 100) : 0;
+  const showLoadingSkeleton =
+    sorted.length === 0 && ideaCreatedAt && new Date().getTime() - new Date(ideaCreatedAt).getTime() < 30000;
 
   const handleAdd = async () => {
     if (!newTitle.trim()) return;
@@ -35,6 +38,19 @@ export function MilestoneList({ ideaId, milestones, onToggleDone, onDelete, onAd
     setNewTitle("");
     setShowAddForm(false);
   };
+
+  if (showLoadingSkeleton) {
+    return (
+      <div className="space-y-2">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-10 bg-gray-100 rounded-lg animate-pulse" />
+        ))}
+        <p className="text-xs text-gray-400 mt-2 text-center">
+          Claude is generating your milestone plan…
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

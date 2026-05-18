@@ -22,3 +22,14 @@ export function useDailyFocus() {
     staleTime: 1000 * 60 * 60,
   });
 }
+
+export function useDashboardActivity() {
+  return useQuery({
+    queryKey: ["dashboard", "activity"],
+    queryFn: async () => {
+      const res = await fetch("/api/dashboard/activity");
+      const json = await res.json();
+      return json.data;
+    },
+  });
+}

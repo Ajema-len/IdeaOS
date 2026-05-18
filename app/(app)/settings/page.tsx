@@ -22,9 +22,11 @@ export default function SettingsPage() {
   const { data: prefs } = useUserPreferences();
   const updatePreferences = useUpdateUserPreferences();
   const [preferences, setPreferences] = useState({
+    name: session?.user?.name || "",
     dailyFocusEnabled: true,
     weeklyReviewEnabled: true,
     weeklyReviewDay: 0,
+    weeklyReviewHour: 9,
     notificationsEnabled: true,
   });
   const [isSaving, setIsSaving] = useState(false);
@@ -32,13 +34,15 @@ export default function SettingsPage() {
   useEffect(() => {
     if (prefs) {
       setPreferences({
+        name: session?.user?.name || "",
         dailyFocusEnabled: prefs.dailyFocusEnabled,
         weeklyReviewEnabled: prefs.weeklyReviewEnabled,
         weeklyReviewDay: prefs.weeklyReviewDay,
+        weeklyReviewHour: prefs.weeklyReviewHour,
         notificationsEnabled: prefs.notificationsEnabled,
       });
     }
-  }, [prefs]);
+  }, [prefs, session?.user?.name]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -64,7 +68,11 @@ export default function SettingsPage() {
           <h2 className="text-lg font-semibold text-gray-900">Profile</h2>
           <div className="mt-4 space-y-4">
             <Input label="Email" value={session?.user?.email || ""} disabled />
-            <Input label="Name" value={session?.user?.name || ""} disabled />
+            <Input
+              label="Name"
+              value={preferences.name}
+              onChange={(e) => setPreferences({ ...preferences, name: e.target.value })}
+            />
           </div>
         </div>
 
@@ -92,29 +100,54 @@ export default function SettingsPage() {
             </label>
 
             {preferences.weeklyReviewEnabled && (
-              <div className="ml-7">
-                <select
-                  value={preferences.weeklyReviewDay}
-                  onChange={(e) => setPreferences({ ...preferences, weeklyReviewDay: Number(e.target.value) })}
-                  className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
-                >
-                  {weekdays.map((day) => (
-                    <option key={day.value} value={day.value}>
-                      {day.label}
-                    </option>
-                  ))}
-                </select>
+              <div className="ml-7 space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-900">Review day</label>
+                  <select
+                    value={preferences.weeklyReviewDay}
+                    onChange={(e) => setPreferences({ ...preferences, weeklyReviewDay: Number(e.target.value) })}
+                    className="mt-2 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
+                  >
+                    {weekdays.map((day) => (
+                      <option key={day.value} value={day.value}>
+                        {day.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900">Review hour</label>
+                  <select
+                    value={preferences.weeklyReviewHour}
+                    onChange={(e) => setPreferences({ ...preferences, weeklyReviewHour: Number(e.target.value) })}
+                    className="mt-2 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
+                  >
+                    {Array.from({ length: 24 }, (_, hour) => (
+                      <option key={hour} value={hour}>
+                        {hour.toString().padStart(2, "0")}:00
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             )}
           </div>
 
           <div className="border-t border-gray-200 pt-6 flex gap-3">
-            <Button variant="outline" onClick={() => prefs && setPreferences({
-              dailyFocusEnabled: prefs.dailyFocusEnabled,
-              weeklyReviewEnabled: prefs.weeklyReviewEnabled,
-              weeklyReviewDay: prefs.weeklyReviewDay,
-              notificationsEnabled: prefs.notificationsEnabled,
-            })}>
+            <Button
+              variant="outline"
+              onClick={() =>
+                prefs &&
+                setPreferences({
+                  name: session?.user?.name || "",
+                  dailyFocusEnabled: prefs.dailyFocusEnabled,
+                  weeklyReviewEnabled: prefs.weeklyReviewEnabled,
+                  weeklyReviewDay: prefs.weeklyReviewDay,
+                  weeklyReviewHour: prefs.weeklyReviewHour,
+                  notificationsEnabled: prefs.notificationsEnabled,
+                })
+              }
+            >
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={isSaving}>

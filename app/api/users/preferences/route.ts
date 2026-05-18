@@ -14,12 +14,14 @@ const weeklyReviewDayMap = {
 } as const;
 
 const preferencesSchema = z.object({
+  name: z.string().max(100).optional(),
   dailyFocusEnabled: z.boolean().optional(),
   weeklyReviewEnabled: z.boolean().optional(),
   weeklyReviewDay: z.union([
     z.number().int().min(0).max(6),
     z.enum(["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"]),
   ]).optional(),
+  weeklyReviewHour: z.number().int().min(0).max(23).optional(),
   notificationsEnabled: z.boolean().optional(),
 });
 
@@ -44,7 +46,7 @@ export async function GET() {
   return NextResponse.json({ data: preferences ?? null });
 }
 
-export async function POST(request: NextRequest) {
+export async function PATCH(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -57,17 +59,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Invalid preferences payload", error: parsed.error.flatten() }, { status: 400 });
     }
 
-    const preferences = await prisma.userPreferences.update({
+    const prefs = await prisma.userPreferences.upsert({
       where: { userId: session.user.id },
-      data: {
+      create: {
+        userId: session.user.id,
+        dailyFocusEnabled: parsed.data.dailyFocusEnabled ?? true,
+        weeklyReviewEnabled: parsed.data.weeklyReviewEnabled ?? true,
+        weeklyReviewDay: parseWeeklyReviewDay(parsed.data.weeklyReviewDay) ?? 1,
+        weeklyReviewHour: parsed.data.weeklyReviewHour ?? 9,
+        notificationsEnabled: parsed.data.notificationsEnabled ?? true,
+      },
+      update: {
         dailyFocusEnabled: parsed.data.dailyFocusEnabled ?? undefined,
         weeklyReviewEnabled: parsed.data.weeklyReviewEnabled ?? undefined,
         weeklyReviewDay: parseWeeklyReviewDay(parsed.data.weeklyReviewDay) ?? undefined,
+        weeklyReviewHour: parsed.data.weeklyReviewHour ?? undefined,
         notificationsEnabled: parsed.data.notificationsEnabled ?? undefined,
       },
     });
 
-    return NextResponse.json({ message: "Preferences updated", preferences });
+    if (parsed.data.name) {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { name: parsed.data.name },
+      });
+    }
+
+    return NextResponse.json({ message: "Preferences updated", data: prefs });
   } catch (error) {
     console.error("Preferences update error:", error);
     return NextResponse.json({ message: "Failed to update preferences" }, { status: 500 });

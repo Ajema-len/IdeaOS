@@ -4,6 +4,7 @@ type UserPreferences = {
   dailyFocusEnabled: boolean;
   weeklyReviewEnabled: boolean;
   weeklyReviewDay: number;
+  weeklyReviewHour: number;
   notificationsEnabled: boolean;
 };
 
@@ -24,7 +25,7 @@ export function useUpdateUserPreferences() {
   return useMutation({
     mutationFn: async (data: Partial<UserPreferences>) => {
       const res = await fetch("/api/users/preferences", {
-        method: "POST",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });

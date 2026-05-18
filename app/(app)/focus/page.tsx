@@ -28,7 +28,7 @@ export default function DailyFocusPage() {
       <div className="flex flex-col gap-8 p-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Daily focus</h1>
-          <p className="mt-2 text-gray-600">No ideas to focus on yet. Create one to get started!</p>
+          <p className="mt-2 text-gray-600">Add some active ideas first to get a daily focus recommendation.</p>
         </div>
       </div>
     );

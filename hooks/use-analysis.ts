@@ -14,7 +14,11 @@ export function useAnalysis(ideaId: string) {
       };
     },
     enabled: !!ideaId,
-    meta: { refetchAttempts: 0 },
+    refetchInterval: (data) => {
+      const hasAnalysis = (data as any)?.fullAnalysis != null;
+      return hasAnalysis ? false : 3000;
+    },
+    refetchIntervalInBackground: false,
   });
 }
 

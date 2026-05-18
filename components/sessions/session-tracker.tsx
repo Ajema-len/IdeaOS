@@ -2,7 +2,6 @@
 
 import { useMemo, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { formatRelativeTime, formatDuration } from "@/lib/utils";
 import { toast } from "sonner";
 import type { WorkSession } from "@prisma/client";
