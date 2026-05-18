@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { use, useState, useRef, useEffect } from "react";
 import { useChatHistory } from "@/hooks/use-chat";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 
-export default function IdeaChatPage({ params }: { params: { id: string } }) {
-  const ideaId = params.id;
+export default function IdeaChatPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: ideaId } = use(params);
   const { data: messages = [], isLoading } = useChatHistory(ideaId);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);

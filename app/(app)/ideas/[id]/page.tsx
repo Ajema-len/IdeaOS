@@ -1,5 +1,6 @@
 "use client";
 
+import { use, useEffect, useState } from "react";
 import { useIdea, useUpdateIdea } from "@/hooks/use-ideas";
 import { useMilestones, useUpdateMilestone, useDeleteMilestone } from "@/hooks/use-milestones";
 import { useSessions, useStartSession, useEndSession } from "@/hooks/use-sessions";
@@ -9,11 +10,10 @@ import { MilestoneList } from "@/components/milestones/milestone-list";
 import { SessionTracker } from "@/components/sessions/session-tracker";
 import { IdeaStatusBadge } from "@/components/ideas/idea-status-badge";
 import { toast } from "sonner";
-import { useEffect, useState } from "react";
 import type { Milestone } from "@prisma/client";
 
-export default function IdeaDetailPage({ params }: { params: { id: string } }) {
-  const ideaId = params.id;
+export default function IdeaDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: ideaId } = use(params);
   const { data: idea, isLoading: ideaLoading, isFetching: ideaFetching, refetch } = useIdea(ideaId);
   const analysis = idea?.analysis?.find((a: any) => a.analysisType === "FULL_ANALYSIS")?.result ?? null;
   const { data: milestones = [], isLoading: milestonesLoading } = useMilestones(ideaId);

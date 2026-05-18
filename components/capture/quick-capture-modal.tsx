@@ -34,6 +34,10 @@ export function QuickCaptureModal({ open = false, onClose, onSubmit, isSubmittin
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ title }),
           });
+          if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`Tag API failed: ${res.status} ${errorText}`);
+          }
           const json = await res.json();
           setSuggestedTags(json.data?.tags ?? []);
         } catch (error) {
