@@ -9,6 +9,7 @@ async function fetchIdeas(filters: IdeaFilters) {
   if (filters.sort) params.set("sort", filters.sort);
   if (filters.order) params.set("order", filters.order);
   if (filters.page) params.set("page", String(filters.page));
+  if (filters.limit) params.set("limit", String(filters.limit));
   const res = await fetch(`/api/ideas?${params}`);
   if (!res.ok) throw new Error("Failed to fetch ideas");
   return res.json();
