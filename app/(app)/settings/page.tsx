@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useUserPreferences, useUpdateUserPreferences } from "@/hooks/use-user-preferences";
+import { MODEL_REGISTRY, TASK_MODEL_MAP } from "@/lib/ai/models";
 
 const weekdays = [
   { label: "Sunday", value: 0 },
@@ -153,6 +154,50 @@ export default function SettingsPage() {
             <Button onClick={handleSave} disabled={isSaving}>
               {isSaving ? "Saving..." : "Save preferences"}
             </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-2xl rounded-3xl border border-gray-200 bg-white p-8 mt-4">
+        <h2 className="text-lg font-semibold text-gray-900">AI models</h2>
+        <p className="mt-2 text-sm text-gray-600">
+          Configured in <code className="bg-gray-100 px-1 rounded">lib/ai/models.ts</code>. To swap a model, update TASK_MODEL_MAP in that file.
+        </p>
+
+        <div className="mt-6 space-y-2">
+          {Object.values(MODEL_REGISTRY).map((model) => (
+            <div key={model.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+              <div>
+                <p className="text-sm font-medium text-gray-900">{model.displayName}</p>
+                <p className="text-xs text-gray-400">{model.description}</p>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0 ml-4">
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                  model.tier === "fast" ? "bg-green-100 text-green-700" :
+                  model.tier === "balanced" ? "bg-blue-100 text-blue-700" :
+                  "bg-purple-100 text-purple-700"
+                }`}>
+                  {model.tier}
+                </span>
+                <span className="text-xs text-gray-400">
+                  ${model.inputCostPer1M}/1M in
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <p className="text-xs font-medium text-gray-500 mb-2">Task assignments</p>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+            {(Object.entries(TASK_MODEL_MAP) as [string, string][]).map(([task, modelId]) => (
+              <div key={task} className="flex items-center justify-between py-0.5">
+                <span className="text-xs text-gray-500">{task.replace(/_/g, " ")}</span>
+                <span className="text-xs font-mono text-gray-700">
+                  {MODEL_REGISTRY[modelId]?.displayName ?? modelId}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
